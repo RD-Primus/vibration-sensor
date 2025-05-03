@@ -1,0 +1,10 @@
+../Application/Primus/Src/Library/app_mems.c:54:6:MX_mem_sensor	1
+../Application/Primus/Src/Library/app_mems.c:63:6:Accelero_Sensor_Handler	2
+../Application/Primus/Src/Library/app_mems.c:78:6:Gyro_Sensor_Handler	2
+../Application/Primus/Src/Library/app_mems.c:95:6:Init_Sensors	1
+../Application/Primus/Src/Library/app_mems.c:112:6:Mems_Start_req	2
+../Application/Primus/Src/Library/app_mems.c:121:6:calculateMagnitude	2
+../Application/Primus/Src/Library/app_mems.c:130:6:Mems_get_sampling_handler	4
+../Application/Primus/Src/Library/app_mems.c:176:6:Process_FFT_Input_buffer	4
+../Application/Primus/Src/Library/app_mems.c:200:6:Cal_Rms_value	2
+../Application/Primus/Src/Library/app_mems.c:222:6:Cal_Rms_velocity	5

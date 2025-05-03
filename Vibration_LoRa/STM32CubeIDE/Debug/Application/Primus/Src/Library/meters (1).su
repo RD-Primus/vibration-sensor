@@ -1,0 +1,12 @@
+../Application/Primus/Src/Library/meters.c:105:6:MotionMC_LoadCalFromNVM	16	static
+../Application/Primus/Src/Library/meters.c:116:6:MotionMC_SaveCalInNVM	16	static
+../Application/Primus/Src/Library/meters.c:140:6:Sensor_Run	8	static
+../Application/Primus/Src/Library/meters.c:150:10:Sensor_Init	8	static
+../Application/Primus/Src/Library/meters.c:166:6:Meters_DeInit	8	static
+../Application/Primus/Src/Library/meters.c:179:17:Meters_STTS22HInit	8	static
+../Application/Primus/Src/Library/meters.c:200:17:Meters_ISM330DHCXInit	8	static
+../Application/Primus/Src/Library/meters.c:221:13:Meters_TriggerSlow	8	static
+../Application/Primus/Src/Library/meters.c:242:13:Measure_Temp_STTS22H	16	static
+../Application/Primus/Src/Library/meters.c:273:13:Measure_Acc_ISM330DHCX	8	static
+../Application/Primus/Src/Library/meters.c:305:13:Acc_Calculation	8	static
+../Application/Primus/Src/Library/meters.c:322:13:Meters_Errors	24	static,ignoring_inline_asm
