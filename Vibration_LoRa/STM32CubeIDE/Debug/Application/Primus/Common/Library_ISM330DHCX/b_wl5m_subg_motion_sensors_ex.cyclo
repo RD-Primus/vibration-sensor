@@ -1,3 +1,0 @@
-../Application/Primus/Common/Library_ISM330DHCX/b_wl5m_subg_motion_sensors_ex.c:60:9:BSP_MOTION_SENSOR_Get_DRDY_Status	6
-../Application/Primus/Common/Library_ISM330DHCX/b_wl5m_subg_motion_sensors_ex.c:132:9:BSP_MOTION_SENSOR_Read_Register	2
-../Application/Primus/Common/Library_ISM330DHCX/b_wl5m_subg_motion_sensors_ex.c:179:9:BSP_MOTION_SENSOR_Write_Register	2

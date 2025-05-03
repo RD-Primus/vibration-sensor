@@ -1,9 +1,0 @@
-../Application/Primus/Interface/Src/Parameter.c:16:6:Force_Reboot	1
-../Application/Primus/Interface/Src/Parameter.c:22:6:Set_LoRa_Key_TEST_MODE	2
-../Application/Primus/Interface/Src/Parameter.c:54:6:Set_LoRa_Key_Info	1
-../Application/Primus/Interface/Src/Parameter.c:68:6:Get_LoRa_Key_Info	5
-../Application/Primus/Interface/Src/Parameter.c:199:6:UplinkCounter_Save	1
-../Application/Primus/Interface/Src/Parameter.c:204:6:Parameter_Init	1
-../Application/Primus/Interface/Src/Parameter.c:280:6:Parameter_Save	4
-../Application/Primus/Interface/Src/Parameter.c:115:6:Default_Parameter	1
-../Application/Primus/Interface/Src/Parameter.c:300:6:Parameter_Read	4
