@@ -1,9 +1,0 @@
-../Application/Primus/Interface/Src/Parameter.c:16:6:Force_Reboot	8	static,ignoring_inline_asm
-../Application/Primus/Interface/Src/Parameter.c:22:6:Set_LoRa_Key_TEST_MODE	48	static
-../Application/Primus/Interface/Src/Parameter.c:54:6:Set_LoRa_Key_Info	8	static
-../Application/Primus/Interface/Src/Parameter.c:68:6:Get_LoRa_Key_Info	48	static
-../Application/Primus/Interface/Src/Parameter.c:199:6:UplinkCounter_Save	0	static
-../Application/Primus/Interface/Src/Parameter.c:204:6:Parameter_Init	0	static
-../Application/Primus/Interface/Src/Parameter.c:280:6:Parameter_Save	0	static
-../Application/Primus/Interface/Src/Parameter.c:115:6:Default_Parameter	24	static
-../Application/Primus/Interface/Src/Parameter.c:300:6:Parameter_Read	0	static
