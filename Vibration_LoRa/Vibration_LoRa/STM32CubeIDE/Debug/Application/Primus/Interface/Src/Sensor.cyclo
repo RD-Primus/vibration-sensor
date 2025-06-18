@@ -1,0 +1,16 @@
+../Application/Primus/Interface/Src/Sensor.c:59:10:Sensor_Init	8
+../Application/Primus/Interface/Src/Sensor.c:86:6:Sensor_DeInit	1
+../Application/Primus/Interface/Src/Sensor.c:51:6:Sensor_Errors	1
+../Application/Primus/Interface/Src/Sensor.c:165:6:Enable_Temp_STTS22H	3
+../Application/Primus/Interface/Src/Sensor.c:185:6:Measure_Temp_STTS22H	3
+../Application/Primus/Interface/Src/Sensor.c:216:6:wake_up_ISM330DHCX	1
+../Application/Primus/Interface/Src/Sensor.c:310:6:calculate_acc	2
+../Application/Primus/Interface/Src/Sensor.c:325:6:calculate_velocity	2
+../Application/Primus/Interface/Src/Sensor.c:342:6:calculateMagnitudeArray	2
+../Application/Primus/Interface/Src/Sensor.c:350:6:find_top_peaks_3axis	14
+../Application/Primus/Interface/Src/Sensor.c:404:6:Threshold_noise	6
+../Application/Primus/Interface/Src/Sensor.c:438:6:Acc_Calculation	12
+../Application/Primus/Interface/Src/Sensor.c:221:6:Measure_Acc_ISM330DHCX	8
+../Application/Primus/Interface/Src/Sensor.c:530:6:Sensor_Run	1
+../Application/Primus/Interface/Src/Sensor.c:536:6:Sensor_Log	1
+../Application/Primus/Interface/Src/Sensor.c:541:6:ACCELERO_GYRO_INT_RUN	5

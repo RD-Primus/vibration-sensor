@@ -1,0 +1,3 @@
+../Application/Primus/Interface/Src/Alarm_interface.c:12:6:Alarm_Status_Battery	3
+../Application/Primus/Interface/Src/Alarm_interface.c:33:6:Alarm_Status_Reset	1
+../Application/Primus/Interface/Src/Alarm_interface.c:42:6:Alarm_Status_Update	2

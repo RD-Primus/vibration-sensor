@@ -1,0 +1,15 @@
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:58:9:BSP_ENV_SENSOR_Get_DRDY_Status	4
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:132:9:BSP_ENV_SENSOR_Read_Register	2
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:181:9:BSP_ENV_SENSOR_Write_Register	2
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:228:9:BSP_ENV_SENSOR_FIFO_Get_Data	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:260:9:BSP_ENV_SENSOR_FIFO_Get_Fth_Status	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:292:9:BSP_ENV_SENSOR_FIFO_Get_Full_Status	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:324:9:BSP_ENV_SENSOR_FIFO_Get_Num_Samples	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:356:9:BSP_ENV_SENSOR_FIFO_Get_Ovr_Status	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:388:9:BSP_ENV_SENSOR_FIFO_Reset_Interrupt	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:420:9:BSP_ENV_SENSOR_FIFO_Set_Interrupt	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:452:9:BSP_ENV_SENSOR_FIFO_Set_Mode	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:484:9:BSP_ENV_SENSOR_FIFO_Set_Watermark_Level	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:516:9:BSP_ENV_SENSOR_FIFO_Stop_On_Watermark	1
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:549:9:BSP_ENV_SENSOR_Set_One_Shot	2
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors_ex.c:598:9:BSP_ENV_SENSOR_Get_One_Shot_Status	1
