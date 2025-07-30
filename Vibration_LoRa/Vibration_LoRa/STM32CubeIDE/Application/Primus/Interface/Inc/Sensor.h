@@ -16,11 +16,12 @@
 
 #define STTS22H_ONESHOT_ENABLE             		false
 #define SENSOR_MEASURE_PERIOD					20
-#define SENSOR_LOG_PERIOD						1000
+#define SENSOR_LOG_PERIOD						2000
 #define FFT_ENABLE             					true
 
 #define ISM330DHCX_TIM							&htim17
-#define Ennable_magnitude 1
+#define Ennable_magnitude 0
+#define Ennable_s 0
 
 #if FFT_ENABLE
 //#define Acc_bufffer_size 2048  //......................
@@ -33,70 +34,40 @@
 #define bufffer_size  2048// (FFT_SIZE * 2)
 #define FFT_SIZE 1024
 
-typedef struct{
-	float 	Sum_sqrt_X;
-	float 	Sum_sqrt_Y;
-	float	Sum_sqrt_Z;
-
-	float 	x;
-	float 	y;
-	float 	z;
-	int16_t		sample_size;
-	uint16_t	index;
-}type_rms;
-
 typedef struct {
-	//MOTION_SENSOR_Axes_t AccValue[Acc_bufffer_size];
-
-//	float32_t aFFT_Input_f32[FFT_BUFFER_SIZE];
-//	float32_t aFFT_Output_f32[FFT_BUFFER_SIZE];
-
-	arm_status status;
-
-	float32_t maxValue;    /* Max FFT value is stored here */
-	uint32_t maxIndex;    /* Index in Output array where max value is */
-
-//	type_rms rms_acc;
-//	type_rms rms_gyr;
-//	type_rms rms_vel;
-
-	uint16_t index;
-	uint16_t index_buff;
 	uint16_t index_afft;
-	uint8_t req_cmd;
-
+	arm_status status;
 	bool Calculate;
 }type_FFT_acc;
 
 #endif
 
-
-
-
-
 typedef struct
 {
-	MOTION_SENSOR_AxesRaw_t data_raw_acceleration;   /**<Raw accelerometer output*/
+  MOTION_SENSOR_AxesRaw_t data_raw_acceleration;   /**<Raw accelerometer output*/
   int16_t temperature;  /**<Last measured temperature [0.01 `C]*/
+
   float32_t ACC_X[bufffer_size];
   float32_t ACC_Y[bufffer_size];
   float32_t ACC_Z[bufffer_size];
-
   float32_t output_fft_mag_z[FFT_SIZE];
   float32_t output_fft_mag_y[FFT_SIZE];
   float32_t output_fft_mag_x[FFT_SIZE];
-
   uint32_t  index2 ;
+  void (*input_and_Apeak)(void);
+
   bool status ;
+  bool status_wk;
   int Update_values;
 
   bool temperature_sensor_good;     /**<True if the sensor is good to measure, false if something failed*/
   bool accelero_sensor_good;  /**<True if the sensor is good to measure, false if something failed*/
 
-//  uint16_t ISM330DHCX_1Sec;
+  uint16_t ISM330DHCX_1Sec_1;
+  uint16_t ISM330DHCX_1Sec_2;
 //  uint16_t STTS22H_1Sec;
-//
-//  uint16_t ISM330DHCX_Tick;
+
+  uint16_t ISM330DHCX_Tick;
 //  uint16_t STTS22H_Tick;
 
   uint16_t ISM330DHCX_fail;
@@ -111,20 +82,55 @@ extern Sensor_t Sensor;
 
 //------------------------------------------------------------------------------------
 #define TOP_N 16
-typedef struct {
-    float value_z;
-    float value_y;
-    float value_x;
-    float_t peakFrequency_z ;
-    float_t peakFrequency_y ;
-    float_t peakFrequency_x ;
-    uint32_t index_x;
-    uint32_t index_y;
-    uint32_t index_z;
-} Peak_t;
-extern Peak_t peaks_acc[TOP_N];
+typedef struct{
+	bool wake_up ;
+	bool offset ;
 
-typedef struct {
+	void(*offset_working)(void);
+	void(*wake_up_now_working)(void);
+	void(*wake_up_working)(void);
+
+    struct{
+    	float32_t sum_x, sum_y ,sum_z;
+    	float32_t x, y, z;
+    	float32_t scale ;
+    	int8_t reg_x , reg_y , reg_z;
+    }offset1;
+
+}sensor_App_t;
+extern sensor_App_t sensor_App;
+
+
+typedef struct{
+	float32_t input_Arms ; // Threshold->wake_up
+	uint8_t WAKE_UP_THS ; // Threshold->wake_up
+	float32_t slope ;
+
+	struct {
+		float32_t x;
+		float32_t y;
+		float32_t z;
+		int input_g;
+		uint8_t reg ;
+	}Fs; // Threshold->Full scale
+
+	struct {
+		uint8_t reg ;
+		uint32_t time ;
+	}ODR_sampling;
+
+	struct {
+		uint32_t freq;
+		float32_t Sampling_Rate;
+	}machine; //Threshold->frequency_machine
+
+	void (*Full_scale)(void);
+	void (*ODR_FS_setting)(void);
+
+}threshold_t;
+extern threshold_t threshold ;
+
+typedef struct{
 	float E_sse_av_x;
 	float E_sse_av_y;
 	float E_sse_av_z;
@@ -137,22 +143,55 @@ typedef struct {
 	float E_sse1_y[(FFT_SIZE / 2)];
 	float E_sse1_z[(FFT_SIZE / 2)];
 
-	uint32_t Ratio_TOP_N;
-	float Ratio_z , Ratio_y , Ratio_x;
 
-}type_threshold_Base;
-extern type_threshold_Base TH;
+	void (*threshold_noise)(void);
+
+
+	uint32_t Ratio_TOP_N;
+	float Ratio_z , Ratio_y , Ratio_x ;
+}Base_noise_t;
+extern Base_noise_t Base_noise;
 
 typedef struct{
-	float32_t rms_x, rms_y , rms_z ;
-	float32_t rms_z_sum , rms_z_sqr;
-	float32_t rms_y_sum , rms_y_sqr;
-	float32_t rms_x_sum , rms_x_sqr;
 
-}Velocity_t;
-extern Velocity_t v;
+	struct {
+	    float Apeak_S1_z;
+	    float Apeak_S1_y;
+	    float Apeak_S1_x;
+	    float Apeak_use_z;
+	    float Apeak_use_y;
+	    float Apeak_use_x;
+	    float_t output_Hz_z ;
+	    float_t output_Hz_y ;
+	    float_t output_Hz_x ;
+	    uint32_t index_z;
+	    uint32_t index_y;
+	    uint32_t index_x;
+	} peaks_acc[TOP_N] ;
 
+	void (*peak)(void);
 
+	struct {
+		float x , y , z;
+	}Interpolated_bin;
+
+}freq_t;
+extern freq_t freq;
+
+typedef struct {
+	float32_t rms_x, rms_y , rms_z;
+	float64_t rms_z_sum , rms_z_sqr[TOP_N] , output_sqr_z;
+	float64_t rms_y_sum , rms_y_sqr[TOP_N] , output_sqr_y;
+	float64_t rms_x_sum , rms_x_sqr[TOP_N] , output_sqr_x , output_Addition_vectors;
+
+	void(*velocity)(void);
+}v_t;
+extern v_t v;
+
+typedef struct {
+    float32_t output_rms_x, output_rms_y, output_rms_z, output_Addition_vectors;
+} acc_t;
+extern acc_t acc;
 
 extern uint32_t Sensor_Init(void);
 extern void Sensor_DeInit(void);

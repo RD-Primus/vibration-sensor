@@ -12,8 +12,12 @@
 ../Application/Primus/Interface/Src/LoRa_Support.c:280:6:LoRaSupport_Add_3Byte	2
 ../Application/Primus/Interface/Src/LoRa_Support.c:293:6:LoRaSupport_Add_2Byte	2
 ../Application/Primus/Interface/Src/LoRa_Support.c:306:6:LoRaSupport_Add_1Byte	2
-../Application/Primus/Interface/Src/LoRa_Support.c:334:6:SyncPayLoad	2
-../Application/Primus/Interface/Src/LoRa_Support.c:343:6:Link_LoRa_buff	4
+../Application/Primus/Interface/Src/LoRa_Support.c:319:6:LoRaSupport_Add_Param_4Byte	2
+../Application/Primus/Interface/Src/LoRa_Support.c:332:6:LoRaSupport_Add_Param_3Byte	2
+../Application/Primus/Interface/Src/LoRa_Support.c:344:6:LoRaSupport_Add_Param_2Byte	2
+../Application/Primus/Interface/Src/LoRa_Support.c:356:6:LoRaSupport_Add_Param_1Byte	2
+../Application/Primus/Interface/Src/LoRa_Support.c:384:6:SyncPayLoad	2
+../Application/Primus/Interface/Src/LoRa_Support.c:393:6:Link_LoRa_buff	4
 ../Application/Primus/Interface/Src/LoRa_Support.c:141:6:LoRa_Support_OnJoin	4
 ../Application/Primus/Interface/Src/LoRa_Support.c:181:10:LoRa_Support_OnTxData	10
-../Application/Primus/Interface/Src/LoRa_Support.c:373:6:LoRaSupport_CayenBuffer	3
+../Application/Primus/Interface/Src/LoRa_Support.c:423:6:LoRaSupport_CayenBuffer	4

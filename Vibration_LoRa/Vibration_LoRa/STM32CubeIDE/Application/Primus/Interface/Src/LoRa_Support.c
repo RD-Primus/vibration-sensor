@@ -13,7 +13,7 @@ ActivationType_t ActivationType = ACTIVATION_TYPE_OTAA;
 
 LoRa_Support_ LoRa_Sup ;
 
-uint32_t Send_Cycle = 36000000 ; //> 0 for Test Send
+uint32_t Send_Cycle = 20000 ; //> 0 for Test Send
 uint8_t fcnt_init = 0;
 uint16_t Random_Time(uint16_t Min, uint16_t Max) {
 
@@ -314,6 +314,56 @@ void LoRaSupport_Add_1Byte(uint8_t channel, uint8_t Type, int32_t val, uint8_t *
 	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = val & 0xFF ;
 
 }
+
+/*******************************/
+void LoRaSupport_Add_Param_4Byte(uint8_t channel, int32_t val, uint8_t *pPayLoad) {
+
+	/* Data ID : 1 byte + Data Type : 1 byte + Data Size : 4 */
+	if ( ((LoRa_Sup.CursorPayLoad) + 6) > PayLoadSize )
+		return ;
+
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = channel ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = (val >> 24) & 0xFF ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = (val >> 16) & 0xFF ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = (val >> 8) & 0xFF ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = val & 0xFF ;
+
+}
+void LoRaSupport_Add_Param_3Byte(uint8_t channel, int32_t val, uint8_t *pPayLoad) {
+
+	/* Data ID : 1 byte + Data Type : 1 byte + Data Size : 3 */
+	if ( ((LoRa_Sup.CursorPayLoad) + 5) > PayLoadSize )
+		return ;
+
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = channel ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = (val >> 16) & 0xFF ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = (val >> 8) & 0xFF ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = val & 0xFF ;
+
+}
+void LoRaSupport_Add_Param_2Byte(uint8_t channel, int32_t val, uint8_t *pPayLoad) {
+
+	/* Data ID : 1 byte + Data Type : 1 byte + Data Size : 2 */
+	if ( ((LoRa_Sup.CursorPayLoad) + 4) > PayLoadSize )
+		return ;
+
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = channel ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = (val >> 8) & 0xFF ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = val & 0xFF ;
+
+}
+
+void LoRaSupport_Add_Param_1Byte(uint8_t channel, int32_t val, uint8_t *pPayLoad) {
+
+	/* Data ID : 1 byte + Data Type + Data Size : 1 byte */
+	if ( ((LoRa_Sup.CursorPayLoad) + 3) > PayLoadSize )
+		return ;
+
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = channel ;
+	*(pPayLoad + (LoRa_Sup.CursorPayLoad++)) = val & 0xFF ;
+
+}
+
 //#define Test_PayLoad
 
 #ifdef Test_PayLoad
@@ -377,20 +427,26 @@ void LoRaSupport_CayenBuffer(uint8_t *_CayenBuffData, uint8_t *_CayenBuffCursor,
 	/** Parameter Configuration Begin**/
 	LoRa_Sup.LoRa_Mode = NFC_Config.LoRa_Mode ;
 	LoRa_Sup.Tx_DutyCycle = NFC_Config.LoRa_Sampling ;
-	LoRa_Sup.TxList = 2 ;
+
+	LoRa_Sup.TxList = 3 ;
 	/** Add PayLoad **/
 //	V23037_Read_Count() ;
 	switch ( LoRa_Sup.TxIndex ) {
 		default :
 			LoRa_Sup.TxIndex = 0 ;
 		case 0 :
-			LoRaSupport_Add_4Byte(0, LPP_DIGITAL_COUNT, NFC_Config.CNT_Foward, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
-			LoRaSupport_Add_4Byte(1, LPP_DIGITAL_COUNT, NFC_Config.CNT_Reverse, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
+			LoRaSupport_Add_Param_4Byte(0,  (uint32_t) acc.output_rms_x, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
+			LoRaSupport_Add_Param_4Byte(1,  (uint32_t) acc.output_rms_z, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
 		break ;
 		case 1 :
 
-			LoRaSupport_Add_4Byte(2, LPP_DIGITAL_COUNT, NFC_Config.Co2_CNT, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
-			LoRaSupport_Add_1Byte(3, LPP_ALARM_STATUS, NFC_Config.Alarm_Status_, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
+			LoRaSupport_Add_Param_4Byte(2,  (uint32_t)0x00, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
+			LoRaSupport_Add_Param_4Byte(3,  (uint32_t)0x00, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
+		break ;
+		case 2 :
+
+			LoRaSupport_Add_Param_4Byte(4,  0x00, LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
+			LoRaSupport_Add_Param_4Byte(4,  0x00 , LoRa_Sup.List_PayLoad[LoRa_Sup.TxIndex]) ;
 		break ;
 	}
 	/** Parameter Configuration End **/

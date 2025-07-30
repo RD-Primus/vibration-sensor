@@ -21,6 +21,7 @@
 #include "app_lorawan.h"
 #include "tim.h"
 #include "gpio.h"
+#include "Sensor.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -90,12 +91,14 @@ int main(void)
   MX_GPIO_Init();
   MX_LoRaWAN_Init();
   MX_TIM17_Init();
+  MX_TIM16_Init();
   /* USER CODE BEGIN 2 */
   HAL_Delay(500);
-//  HAL_TIM_Base_Start_IT(&htim16) ;
+  HAL_TIM_Base_Start_IT(&htim16) ;
+
+//  sensor_App.offset = 1;
 //  HAL_TIM_Base_Start_IT(&htim17) ;
 //  HAL_LPTIM_Counter_Start_IT(&hlptim3, 4800);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -103,7 +106,12 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    MX_LoRaWAN_Process();
+	  MX_LoRaWAN_Process();
+
+//	 if(calculate.cal){
+//	    calculate.Acc_Calculation();
+//	    calculate.cal = 0;
+//	   }
 
     /* USER CODE BEGIN 3 */
   }

@@ -557,7 +557,6 @@ int32_t CUSTOM_NFCTAG_ReadEHMode(uint32_t Instance, ST25DVxxKC_EH_MODE_STATUS_E 
 int32_t CUSTOM_NFCTAG_WriteEHMode(uint32_t Instance, const ST25DVxxKC_EH_MODE_STATUS_E EH_mode )
 {
   UNUSED(Instance);
-
   return ST25DVxxKC_WriteEHMode(&NfcTagObj, EH_mode);
 }
 

@@ -60,6 +60,7 @@ void EXTI2_IRQHandler(void);
 void EXTI4_IRQHandler(void);
 void DMA1_Channel5_IRQHandler(void);
 void EXTI9_5_IRQHandler(void);
+void TIM16_IRQHandler(void);
 void TIM17_IRQHandler(void);
 void USART2_IRQHandler(void);
 void RTC_Alarm_IRQHandler(void);

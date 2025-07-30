@@ -466,6 +466,7 @@ void LoRaWAN_Init(void)
   UTIL_TIMER_Create(&RxLedTimer, LED_PERIOD_TIME, UTIL_TIMER_ONESHOT, OnRxTimerLedEvent, NULL);
   UTIL_TIMER_Create(&JoinLedTimer, LED_PERIOD_TIME, UTIL_TIMER_PERIODIC, OnJoinTimerLedEvent, NULL);
 
+
   if (FLASH_IF_Init(NULL) != FLASH_IF_OK)
   {
     Error_Handler();

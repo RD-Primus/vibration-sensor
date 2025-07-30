@@ -119,8 +119,9 @@ void Application_Initial(void) {
 	Sensor_Init();
 
 
-//	UTIL_TIMER_Create(&Log, SENSOR_LOG_PERIOD, UTIL_TIMER_PERIODIC, Sensor_Log, NULL);
-//	UTIL_TIMER_Start(&Log);
+	UTIL_TIMER_Create(&Log, SENSOR_LOG_PERIOD, UTIL_TIMER_PERIODIC, Sensor_Log, NULL);
+	UTIL_TIMER_Start(&Log);
+
 
 //	UTIL_TIMER_Create(&wake_up, 5000, UTIL_TIMER_PERIODIC, wake_up_ISM330DHCX, NULL);
 //	UTIL_TIMER_Start(&wake_up);
@@ -165,12 +166,23 @@ void HAL_IncTick(void) {
 #endif
 }
 uint8_t iii = 0;
+uint16_t Tick;
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 
 #if ( !defined Power_Test)
 	if(htim->Instance == TIM17){
-		Measure_Acc_ISM330DHCX();
+			Measure_Acc_ISM330DHCX();
 	}
+	else if(htim->Instance == TIM16){
+		Tick++;
+			if ( Tick >= 1000 ) {
+				Sensor.ISM330DHCX_1Sec_1 = Sensor.ISM330DHCX_Tick ;
+				Sensor.ISM330DHCX_Tick = 0 ;
+				Tick = 0;
+			}
+	}
+
+
 #endif
 
 }

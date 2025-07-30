@@ -14,29 +14,73 @@
 arm_cfft_radix4_instance_f32	FFThandler;
 //arm_rfft_fast_instance_f32 fft_instance;
 
-#define START_MCU_LOAD			false
-
-#define Acc_FS 16
-#define Sampling_Rate 3200
-#define SUPPRESSION_WIDTH 3
+#define START_MCU_LOAD	false
+#define SUPPRESSION_WIDTH 2
 
 #if FFT_ENABLE
 type_FFT_acc FFT_Acc;
 #endif
+float Interpolated_bin_z ;
+float Interpolated_bin_y ;
+float Interpolated_bin_x ;
 
 static uint32_t Sensor_STTS22HInit(void);
 static uint32_t Sensor_ISM330DHCXInit(void);
 
+void Full_scale (void);
+void ODR_FS_setting (void);
+void offset_working(void);
+void wake_up_now_working(void);
+void wake_up_working(void);
+
+void input_and_Apeak(void);
+void threshold_noise(void);
+void peak(void);
+void velocity(void);
+void Reset(void);
+
+float S1_x[512];
+float S1_y[512];
+float S1_z[512];
+//float t_peak_s[512 + 2];  // Temporary buffer for edge mirroring
+//float R[512];       // Inverse of S1[k]
+//float R1[512];      // Smoothed inverse spectrum (after FIR)
+
+bool count;
 //--------------------------------------------------------
-Peak_t peaks_acc[TOP_N]; //  Prak_acc
+Sensor_t Sensor ={.input_and_Apeak = &input_and_Apeak};
 
-type_threshold_Base TH; // Threshold_noise
+threshold_t threshold = {
+	.WAKE_UP_THS = 0x01,
+//	.input_Arms = 0.001,
+	.Fs = {.input_g = 4 , .reg = 0 },
+	.ODR_sampling = { .reg = 0},
+	.machine = {.freq = 1600},
+		.Full_scale = &Full_scale ,
+		.ODR_FS_setting = &ODR_FS_setting
+};
 
-Velocity_t v;
+Base_noise_t Base_noise = {
+		  .threshold_noise = &threshold_noise
+};
+
+freq_t freq = {
+    .peak = &peak,
+};
+sensor_App_t sensor_App ={
+		.wake_up = 0,
+		.offset = 0,
+		.offset_working = &offset_working ,
+		.wake_up_now_working = &wake_up_now_working,
+		.wake_up_working = &wake_up_working,
+
+		.offset1 = {.scale = 0.015625 , .reg_x = 0 , .reg_y = 0 , .reg_z = 0 }
+};
+v_t v = {.velocity = &velocity };
 
 Sensor_t Sensor;
+acc_t acc ;
 
-float32_t Arms_x, Arms_y, Arms_z;
 //--------------------------------------------------------
 
 
@@ -129,33 +173,22 @@ static uint32_t Sensor_ISM330DHCXInit(void)
   {
     return 1;
   }
-  if (BSP_MOTION_SENSOR_SetFullScale(MOTION_SENSOR_ISM330DHCX_0, MOTION_ACCELERO, Acc_FS))
-  {
-    return 2;
-  }
-  if (BSP_MOTION_SENSOR_SetOutputDataRate(MOTION_SENSOR_ISM330DHCX_0, MOTION_ACCELERO, 3332u))
-  {
-    return 3;
-  }
+//  if (BSP_MOTION_SENSOR_SetFullScale(MOTION_SENSOR_ISM330DHCX_0, MOTION_ACCELERO, threshold.Fs.input_g))
+//  {
+//    return 2;
+//  }
+//  if (BSP_MOTION_SENSOR_SetOutputDataRate(MOTION_SENSOR_ISM330DHCX_0, MOTION_ACCELERO, 1666u))
+//  {
+//    return 3;
+//  }
   /* USER CODE BEGIN Init */
-
-   uint8_t WAKE_UP_DUR = 0x1F; //delay interrupt -> 2.459 sec
-   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_DUR , WAKE_UP_DUR);//  -> sleep mode
 
 //   uint8_t CTRL8_XL = 0xE4; //HPF
 //   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL8_XL  ,  CTRL8_XL); //---------------------
 
-   uint8_t WAKE_UP_THS = 0x01;
-   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_THS, WAKE_UP_THS);
-
-   uint8_t TAP_CFG0  = 0x00; 	// slope -> 0x00 , HPF -> 0x10 // latched 0x41(slope) 0x51(HPF)
-   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_TAP_CFG0, TAP_CFG0); //----------------------------
-
-   uint8_t TAP_CFG2  = 0xC0;
-   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0,ISM330DHCX_TAP_CFG2 , TAP_CFG2 );
-
-   uint8_t MD1_CFG  = 0xE0;
-   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_MD1_CFG , MD1_CFG);
+  threshold.ODR_FS_setting();
+  uint8_t CTRL1_XL = (threshold.Fs.reg | threshold.ODR_sampling.reg) ; //Setting -> Fs , sampling Rate
+  BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL1_XL , CTRL1_XL);
 
   /* USER CODE END Init */
 
@@ -218,7 +251,11 @@ void wake_up_ISM330DHCX()
 
 }
 uint8_t Read_Status =0;
+
 void Measure_Acc_ISM330DHCX() {
+
+	Sensor.ISM330DHCX_Tick++;
+
 	if ( Sensor.bussy )
 		return ;
 
@@ -254,49 +291,13 @@ void Measure_Acc_ISM330DHCX() {
 		} else {
 			Sensor.ISM330DHCX_fail = 0 ;
 #if FFT_ENABLE
+			threshold.Full_scale();
+			//threshold.ODR();
 
-			if ( FFT_Acc.Calculate ) {
+			sensor_App.offset_working();
+			sensor_App.wake_up_now_working();
+			sensor_App.wake_up_working();
 
-				uint8_t WAKE_UP_SRC ;
-				BSP_MOTION_SENSOR_Read_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_SRC, &WAKE_UP_SRC) ;
-
-
-				Sensor.status = (WAKE_UP_SRC & 0x10) ? 0 : 1 ;
-
-				if ( Sensor.index2 < FFT_SIZE ) {
-
-					int out_index =  Sensor.index2 * 2 ;
-
-					Sensor.ACC_X[out_index] = ((ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.x) / 1000.0f) * 9.80665f) ;
-					Sensor.ACC_Y[out_index] = ((ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.y) / 1000.0f) * 9.80665f) ;
-					Sensor.ACC_Z[out_index] = (((ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.z) / 1000.0f) * 9.80665f) - 9.80665f);
-
-					Sensor.ACC_X[out_index + 1] = 0.0f ;
-					Sensor.ACC_Y[out_index + 1] = 0.0f ;
-					Sensor.ACC_Z[out_index + 1] = 0.0f ;
-
-#if Ennable_magnitude
-					MW_LOG(TS_OFF, VLEVEL_M," $%d %d %d;",Sensor.data_raw_acceleration.x , Sensor.data_raw_acceleration.y , Sensor.data_raw_acceleration.z);
-#endif
-					 Sensor.index2 ++ ;
-
-				} else {
-
-					Acc_Calculation() ;
-					if ( Sensor.status  == 0 ) {
-
-						FFT_Acc.Calculate = 0 ;
-						HAL_TIM_Base_Stop_IT(ISM330DHCX_TIM) ;
-#if START_MCU_LOAD
-						UTIL_SEQ_PauseTask(1 << CFG_SEQ_Task_ApplicationLoop) ;
-#endif
-						MW_LOG(TS_OFF, VLEVEL_M, "###### ACCELERO_GYRO Sleep ######\r\n")
-						;
-
-					}
-				}
-
-			}
 #endif
 		}
 
@@ -304,7 +305,6 @@ void Measure_Acc_ISM330DHCX() {
 
 	Sensor.bussy = 0 ;
 }
-
 #if FFT_ENABLE
 
 void calculate_acc(float *x, float *y, float *z, uint16_t size, float *Arms_x, float *Arms_y, float *Arms_z){
@@ -321,38 +321,87 @@ void calculate_acc(float *x, float *y, float *z, uint16_t size, float *Arms_x, f
        *Arms_y = sqrtf(sum_ay2 / size);
        *Arms_z = sqrtf(sum_az2 / size);
 }
+void calculate_velocity( freq_t *freq, uint16_t TOP) {
 
-void calculate_velocity(Peak_t *peaks_acc, Velocity_t *v, uint16_t TOP) {
+    for (int i = 0; i < TOP ; i++) {
+        float factor_x = 2.0f * M_PI * freq->peaks_acc[i].output_Hz_x * sqrtf(2.0f);
+        float factor_y = 2.0f * M_PI * freq->peaks_acc[i].output_Hz_y * sqrtf(2.0f);
+        float factor_z = 2.0f * M_PI * freq->peaks_acc[i].output_Hz_z * sqrtf(2.0f);
 
-    for (int i = 0; i < TOP; i++) {
-        float factor_x = 2.0f * M_PI * peaks_acc[i].peakFrequency_x * sqrtf(2.0f);
-        float factor_y = 2.0f * M_PI * peaks_acc[i].peakFrequency_y * sqrtf(2.0f);
-        float factor_z = 2.0f * M_PI * peaks_acc[i].peakFrequency_z * sqrtf(2.0f);
+        freq->peaks_acc[i].Apeak_use_x = Sensor.output_fft_mag_x[freq->peaks_acc[i].index_x - 1] + Sensor.output_fft_mag_x[freq->peaks_acc[i].index_x + 1];
+        freq->peaks_acc[i].Apeak_use_y = Sensor.output_fft_mag_y[freq->peaks_acc[i].index_y - 1] + Sensor.output_fft_mag_y[freq->peaks_acc[i].index_y + 1];
+        freq->peaks_acc[i].Apeak_use_z = Sensor.output_fft_mag_z[freq->peaks_acc[i].index_z - 1] + Sensor.output_fft_mag_z[freq->peaks_acc[i].index_z + 1];
 
-        v[i].rms_x = (peaks_acc[i].value_x / factor_x) * 1000.0f;
-        v[i].rms_y = (peaks_acc[i].value_y / factor_y) * 1000.0f;
-        v[i].rms_z = (peaks_acc[i].value_z / factor_z) * 1000.0f;
+        v.rms_x_sqr[i] = ( freq->peaks_acc[i].Apeak_use_x/ factor_x);
+        v.rms_y_sqr[i] = ( freq->peaks_acc[i].Apeak_use_y/ factor_y);
+        v.rms_z_sqr[i] = ( freq->peaks_acc[i].Apeak_use_z/ factor_z);
 
-        v->rms_x_sum += v[i].rms_x  * v[i].rms_x ;
-        v->rms_y_sum += v[i].rms_y  * v[i].rms_y ;
-        v->rms_z_sum += v[i].rms_z  * v[i].rms_z;
+        v.rms_x = (v.rms_x_sqr[i] < DBL_MIN) ? 0 : v.rms_x_sqr[i];
+        v.rms_y = (v.rms_y_sqr[i] < DBL_MIN) ? 0 : v.rms_y_sqr[i];
+        v.rms_z = (v.rms_z_sqr[i] < DBL_MIN) ? 0 : v.rms_z_sqr[i];
+
+        v.rms_x_sum += v.rms_x * v.rms_x;
+        v.rms_y_sum += v.rms_y * v.rms_y;
+        v.rms_z_sum += v.rms_z * v.rms_z;
     }
 }
+//void calculate_velocity_time( float *z, uint16_t size, float sampling_rate, Velocity_t *v) {
+//
+//	float32_t vz[size];	 vz[0] = 0;
+//	float32_t sum_vz = 0.0f ;
+//	float32_t dt = 1.0f / sampling_rate;
+//
+//	float32_t mean_z = 0.0f;
+//	    for (uint16_t i = 0; i < size; i++) {
+//	        mean_z += z[i*2];
+//	    }mean_z /= size;
+//
+//	    for (uint16_t i = 0; i < size; i++) {
+//	        z[i*2] -= mean_z;
+//	    }
+////	    float32_t init_velocity = 0.0f;
+////	    for (uint16_t i = 1; i < size; i++) {
+////	        init_velocity += z[i*2] * dt;
+////	    }vz[0] = init_velocity;
+//	   for (uint16_t i = 1; i < size; i++) {
+//	        vz[i] =  vz[i - 1] +  (z[2*i] * dt);
+//	        sum_vz +=  vz[i] * vz[i];
+//	    }
+//	    v->rms_z_sqr =  sqrtf(sum_vz / size)* 1000;
+//}
+//void high_pass_filter(float *data, uint16_t size_FFT, float sampling_rate, float cutoff_freq) {
+//
+//    float RC = 1.0f / (2.0f * M_PI * cutoff_freq);
+//    float dt = 1.0f / sampling_rate;
+//    float alpha = RC / (RC + dt);
+//
+//    float prev_input = data[0];
+//    float prev_output = data[0];
+//
+//    for (uint16_t i = 1; i < size_FFT * 2; i++) {
+//        float current_input = data[i * 2];
+//        data[i * 2] = alpha * (prev_output + current_input - prev_input);
+//
+//        prev_input = current_input;
+//        prev_output = data[i * 2];
+//    }
+//}
 
 void calculateMagnitudeArray(float *input, float *output, int length) {
     for (int i = 0; i < length ; i++) {
-        float real = input[2 * i];  ////////////////////////////////////////////////////////
+        float real = input[2 * i];
         float imag = input[2 * i + 1];
         output[i] = sqrtf(real * real + imag * imag);
     }
 }
-
-void find_top_peaks_3axis(float mag_x[], float mag_y[], float mag_z[], Peak_t peaks_acc[], uint32_t fft_size )
+void find_top_peaks_3axis(float mag_x[], float mag_y[], float mag_z[], freq_t *freq, uint32_t fft_size )
 {
     uint8_t used[fft_size];
     for (uint32_t i = 0; i < fft_size; i++) {
         used[i] = 0;
     }
+    // haven't index 1
+    used[1] = 1;
 
     for (uint32_t n = 0; n < TOP_N; n++) {
         float max_val_x = 0.0f;
@@ -364,7 +413,7 @@ void find_top_peaks_3axis(float mag_x[], float mag_y[], float mag_z[], Peak_t pe
         uint32_t max_idx_z = 0;
 
         // find peak
-        for (uint32_t i = 1; i < fft_size; i++) {
+        for (uint32_t i = 3; i < fft_size; i++) { // 9.375
             if (!used[i]) {
                 if (mag_x[i] > max_val_x) {
                     max_val_x = mag_x[i];
@@ -381,13 +430,13 @@ void find_top_peaks_3axis(float mag_x[], float mag_y[], float mag_z[], Peak_t pe
             }
         }
 
-        peaks_acc[n].value_x = max_val_x;
-        peaks_acc[n].value_y = max_val_y;
-        peaks_acc[n].value_z = max_val_z;
+        freq->peaks_acc[n].Apeak_S1_x = max_val_x;
+        freq->peaks_acc[n].Apeak_S1_y = max_val_y;
+        freq->peaks_acc[n].Apeak_S1_z = max_val_z;
 
-        peaks_acc[n].index_x = max_idx_x;
-        peaks_acc[n].index_y = max_idx_y;
-        peaks_acc[n].index_z = max_idx_z;
+        freq->peaks_acc[n].index_x = max_idx_x;
+        freq->peaks_acc[n].index_y = max_idx_y;
+        freq->peaks_acc[n].index_z = max_idx_z;
 
         for (int j = -(int)SUPPRESSION_WIDTH; j <= (int)SUPPRESSION_WIDTH; j++) {
             int idx_x = (int)max_idx_x + j;
@@ -401,36 +450,333 @@ void find_top_peaks_3axis(float mag_x[], float mag_y[], float mag_z[], Peak_t pe
     }
 }
 
-void Threshold_noise(float mag_z[], float E_sse_av , float  E_sse_sum , float E_sse1[] ) {
 
-    float  R[FFT_SIZE / 2], S1[FFT_SIZE / 2]/*, R1[FFT_SIZE / 2]*/;
-    float  t_peak_s[(FFT_SIZE / 2) + 2] /*, t_peak_r[(FFT_SIZE / 2) + 2]*/;
-    float  Nsse = 51;
+void Threshold_E_sse(float mag_z[], float E_sse1[], float S1[]) {
+    int half_size = FFT_SIZE / 2;
+    int Nsse = 51;  // Length of the FIR smoothing filter
 
-    for (int i = 0; i < FFT_SIZE / 2; i++) {
-            R[i] = 0.0f;
-            S1[i] = 0.0f;
-            //R1[i] = 0.0f;
-            E_sse1[i] = 0.0f;
+    // Step 1–2: Combined – 3-point moving average with manual edge wrapping
+    for (int i = 0; i < half_size; i++) {
+        float prev = (i == 0) ? mag_z[half_size - 1] : mag_z[i - 1];
+        float curr = mag_z[i];
+        float next = (i == half_size - 1) ? mag_z[0] : mag_z[i + 1];
+        S1[i] = (prev + curr + next) / 3.0f;
+    }
+
+    // Step 3–5: Inverse, FIR smoothing, and final SSE combined
+    for (int k = 0; k < half_size; k++) {
+        float sum = 0.0f;
+        for (int n = 0; n < Nsse; n++) {
+            int idx = (k - n + half_size) % half_size;
+            float inv = (S1[idx] > 0.0f) ? (1.0f / S1[idx]) : 0.0f;
+            sum += inv;
         }
 
-    t_peak_s[0] = mag_z[(FFT_SIZE / 2) - 1];
-    t_peak_s[(FFT_SIZE / 2) + 1] = mag_z[0];
+        float avg_inv = sum / Nsse;
+        E_sse1[k] = (avg_inv > 0.0f) ? (1.0f / avg_inv) : 0.0f;
+    }
+}
 
-    for (int i = 1; i <= (FFT_SIZE / 2); i++) {
-        t_peak_s[i] = mag_z[i - 1];
-    }
-    // Moving average
-    for (int i = 0; i < (FFT_SIZE / 2); i++) {
-        S1[i] = (t_peak_s[i] + t_peak_s[i + 1] + t_peak_s[i + 2]) / 3.0f;
-         R[i] = (S1[i] != 0.0f) ? 1.0f / S1[i] : 0.0f;
-    }
-    // Smooth by FIR filter
-    for(int i = 0 ; i < (FFT_SIZE / 2) ; i ++ ){
-    	R[i] = (i < (Nsse-1)) ? R[i] * (1.0f / Nsse) : 0.0f;
-    	E_sse1[i] = (R[i] != 0.0f) ? 1.0f / R[i] : 0.0f;
-    }
+void Reset(){
+	memset(Sensor.ACC_Z, 0, sizeof(Sensor.ACC_Z));
+	memset(Sensor.ACC_Y, 0, sizeof(Sensor.ACC_Y));
+	memset(Sensor.ACC_X, 0, sizeof(Sensor.ACC_X));
+	memset(Sensor.output_fft_mag_z, 0, sizeof(Sensor.output_fft_mag_z)); //Reset array
+	memset(Sensor.output_fft_mag_y, 0, sizeof(Sensor.output_fft_mag_y)); //Reset array
+	memset(Sensor.output_fft_mag_x, 0, sizeof(Sensor.output_fft_mag_x)); //Reset array
+//	memset(freq.peaks_acc, 0, sizeof(freq.peaks_acc));
+	Sensor.index2 = 0;
+}
 
+//---------------------------------------------------------------------------------------------------------------
+
+void Full_scale (){
+switch (threshold.Fs.input_g) {
+	case 2:
+		threshold.Fs.x = ism330dhcx_from_fs2g_to_mg(Sensor.data_raw_acceleration.x);
+		threshold.Fs.y = ism330dhcx_from_fs2g_to_mg(Sensor.data_raw_acceleration.y);
+		threshold.Fs.z = ism330dhcx_from_fs2g_to_mg(Sensor.data_raw_acceleration.z);
+		break;
+	case 4:
+		threshold.Fs.x = ism330dhcx_from_fs4g_to_mg(Sensor.data_raw_acceleration.x);
+		threshold.Fs.y = ism330dhcx_from_fs4g_to_mg(Sensor.data_raw_acceleration.y);
+		threshold.Fs.z = ism330dhcx_from_fs4g_to_mg(Sensor.data_raw_acceleration.z);
+		break;
+	case 8 :
+		threshold.Fs.x = ism330dhcx_from_fs8g_to_mg(Sensor.data_raw_acceleration.x);
+		threshold.Fs.y = ism330dhcx_from_fs8g_to_mg(Sensor.data_raw_acceleration.y);
+		threshold.Fs.z = ism330dhcx_from_fs8g_to_mg(Sensor.data_raw_acceleration.z);
+		break;
+	case 16 :
+		threshold.Fs.x = ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.x);
+		threshold.Fs.y = ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.y);
+		threshold.Fs.z = ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.z);
+		break;
+	default:
+		break;
+ }
+
+//threshold.test = ((threshold.input_Arms * sqrtf(2)) / 9.80665) * (256.0f / (float32_t)threshold.Fs.input_g);
+//threshold.WAKE_UP_THS = (uint8_t)(threshold.test);
+//if(threshold.test <= 1.0f){
+//	threshold.WAKE_UP_THS = 0x01;
+//}
+
+
+//threshold.slope = (threshold.input_Arms * sqrtf(2) * (256.0f / 4.0f) *  arm_sin_f32(2 * PI * 640 * (1.0f / 6667.0f))) / (9.80665 *  2.0f);
+//threshold.WAKE_UP_THS = (uint8_t)((threshold.slope));
+//if(threshold.slope  <= 1.0f){
+//	threshold.WAKE_UP_THS = 0x01;
+//}
+
+}
+
+void ODR_FS_setting(){
+
+	threshold.ODR_sampling.reg = 0b10010000; // 6667 Hz
+
+	switch (threshold.Fs.input_g) {
+		case 2:threshold.Fs.reg = 0b00000000;break;
+		case 4:threshold.Fs.reg = 0b00001000;break;
+		case 8:threshold.Fs.reg = 0b00001100;break;
+		case 16:threshold.Fs.reg = 0b00000100;break;
+		default:break;
+	 }
+}
+
+void offset_working(){
+	if( Sensor.index2 < FFT_SIZE && sensor_App.offset){
+		sensor_App.offset1.sum_x += (threshold.Fs.x / 1000.0f) ;
+		sensor_App.offset1.sum_y += (threshold.Fs.y / 1000.0f) ;
+		sensor_App.offset1.sum_z += (threshold.Fs.z / 1000.0f) ;
+
+		Sensor.index2++;
+
+	}else if(sensor_App.offset){
+
+		sensor_App.offset1.x = sensor_App.offset1.sum_x / (float)FFT_SIZE;
+		sensor_App.offset1.y = sensor_App.offset1.sum_y / (float)FFT_SIZE;
+		sensor_App.offset1.z = sensor_App.offset1.sum_z / (float)FFT_SIZE;
+
+		uint8_t CTRL7_G = 0x02 ; // accelerometer user offset correction block enabled
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL7_G  ,  CTRL7_G );
+	    uint8_t CTRL6_C = 0x08 ; // 0x00: 2^-10 g/LSB     0x08: 2^-6 g/LSB
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL6_C  ,  CTRL6_C);
+	    sensor_App.offset1.reg_x = (int8_t)(sensor_App.offset1.x / sensor_App.offset1.scale) ;
+	    sensor_App.offset1.reg_y = (int8_t)(sensor_App.offset1.y / sensor_App.offset1.scale) ;
+	    sensor_App.offset1.reg_z = (int8_t)(sensor_App.offset1.z / sensor_App.offset1.scale) ;
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_X_OFS_USR  ,  sensor_App.offset1.reg_x );
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_Y_OFS_USR  ,  sensor_App.offset1.reg_y );
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_Z_OFS_USR  ,  sensor_App.offset1.reg_z );
+
+		   uint8_t WAKE_UP_DUR = 0x1F; //delay interrupt -> x sec
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_DUR , WAKE_UP_DUR); // -> sleep mode
+
+		   uint8_t WAKE_UP_THS = threshold.WAKE_UP_THS;
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_THS, WAKE_UP_THS);
+
+		   uint8_t TAP_CFG0  = 0x00; 	// slope -> 0x00 , HPF -> 0x10 // latched 0x41(slope) 0x51(HPF)
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_TAP_CFG0, TAP_CFG0); //----------------------------
+
+		   uint8_t TAP_CFG2  = 0xC0;
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0,ISM330DHCX_TAP_CFG2 , TAP_CFG2 );
+
+		   uint8_t MD1_CFG  = 0xE0;
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_MD1_CFG , MD1_CFG);
+
+		 if(!Sensor.status_wk){HAL_TIM_Base_Stop_IT(ISM330DHCX_TIM) ;}
+
+		 Sensor.index2 = 0;
+		 sensor_App.offset  = 0;
+	}
+}
+void wake_up_now_working(){
+	if( Sensor.index2 < FFT_SIZE && sensor_App.wake_up ){
+		int out_index =  Sensor.index2 * 2 ;
+
+//		Sensor.ACC_X[out_index] = threshold.Fs.x ;
+//		Sensor.ACC_Y[out_index] = threshold.Fs.y ;
+//		Sensor.ACC_Z[out_index] = threshold.Fs.z ;
+		Sensor.ACC_X[out_index] = ((threshold.Fs.x / 1000.0f) * 9.80665f) ;
+		Sensor.ACC_Y[out_index] = ((threshold.Fs.y / 1000.0f) * 9.80665f) ;
+		Sensor.ACC_Z[out_index] = ((threshold.Fs.z / 1000.0f) * 9.80665f) ;
+		Sensor.ACC_X[out_index + 1] = 0.0f ;
+		Sensor.ACC_Y[out_index + 1] = 0.0f ;
+		Sensor.ACC_Z[out_index + 1] = 0.0f ;
+
+		Sensor.index2++ ;
+
+	}else if(sensor_App.wake_up ){
+
+		   uint8_t WAKE_UP_DUR = 0x1F; //delay interrupt -> x sec
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_DUR , WAKE_UP_DUR); // -> sleep mode
+
+		   uint8_t WAKE_UP_THS = threshold.WAKE_UP_THS;
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_THS, WAKE_UP_THS);
+
+		   uint8_t TAP_CFG0  = 0x00; 	// slope -> 0x00 , HPF -> 0x10 // latched 0x41(slope) 0x51(HPF)
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_TAP_CFG0, TAP_CFG0); //----------------------------
+
+		   uint8_t TAP_CFG2  = 0xC0;
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0,ISM330DHCX_TAP_CFG2 , TAP_CFG2 );
+
+		   uint8_t MD1_CFG  = 0xE0;
+		   BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_MD1_CFG , MD1_CFG);
+
+		 Acc_Calculation();
+		 if(!Sensor.status_wk){HAL_TIM_Base_Stop_IT(ISM330DHCX_TIM) ; }
+	}
+}
+void wake_up_working(){
+	if ( FFT_Acc.Calculate && !(sensor_App.wake_up || sensor_App.offset) ) {
+
+		uint8_t WAKE_UP_SRC ;
+		BSP_MOTION_SENSOR_Read_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_SRC, &WAKE_UP_SRC) ;
+
+		Sensor.status = (WAKE_UP_SRC & 0x10) ? 0 : 1 ;
+
+		if ( Sensor.index2 < FFT_SIZE ) {
+
+			int out_index =  Sensor.index2 * 2 ;
+
+//			Sensor.ACC_X[out_index] = threshold.Fs.x ;
+//			Sensor.ACC_Y[out_index] = threshold.Fs.y ;
+//			Sensor.ACC_Z[out_index] = threshold.Fs.z ;
+			Sensor.ACC_X[out_index] = ((threshold.Fs.x / 1000.0f) * 9.80665f) ;
+			Sensor.ACC_Y[out_index] = ((threshold.Fs.y / 1000.0f) * 9.80665f) ;
+			Sensor.ACC_Z[out_index] = ((threshold.Fs.z / 1000.0f) * 9.80665f) ;
+			Sensor.ACC_X[out_index + 1] = 0.0f ;
+			Sensor.ACC_Y[out_index + 1] = 0.0f ;
+			Sensor.ACC_Z[out_index + 1] = 0.0f ;
+
+#if Ennable_magnitude
+			MW_LOG(TS_OFF, VLEVEL_M," $%d %d %d;",(int)(Sensor.ACC_X[out_index]*1000.0f) , (int)(Sensor.ACC_Y[out_index]*1000.0f) , (int)(Sensor.ACC_Z[out_index] * 1000.0f));
+#endif
+			 Sensor.index2++ ;
+
+		} else {
+
+			Acc_Calculation() ;
+			if ( Sensor.status  == 0 ) {
+
+				FFT_Acc.Calculate = 0 ;
+				Sensor.status_wk = 0;
+				HAL_TIM_Base_Stop_IT(ISM330DHCX_TIM) ;
+				//HAL_TIM_Base_Stop_IT(&htim16) ;
+#if START_MCU_LOAD
+				UTIL_SEQ_PauseTask(1 << CFG_SEQ_Task_ApplicationLoop) ;
+#endif
+				MW_LOG(TS_OFF, VLEVEL_M, "###### ACCELERO_GYRO Sleep ######\r\n")
+				;
+
+			}
+		}
+
+	}
+}
+
+//-----------------------------------------------------------------------------------------------------------------
+
+void input_and_Apeak(){
+	float32_t Hann_w ;
+	for(int i = 0 ; i < FFT_SIZE ; i++){
+			Hann_w  = 0.5f * (1.0f - arm_cos_f32((2.0f * PI * i) / (FFT_SIZE - 1)));
+			Sensor.ACC_Z[i*2] *= Hann_w; Sensor.ACC_Y[i*2] *= Hann_w; Sensor.ACC_X[i*2] *= Hann_w;
+	}
+
+	arm_cfft_radix4_f32(&FFThandler , Sensor.ACC_Z);
+	arm_cfft_radix4_f32(&FFThandler , Sensor.ACC_Y);
+	arm_cfft_radix4_f32(&FFThandler , Sensor.ACC_X);
+
+	arm_cmplx_mag_f32(Sensor.ACC_Z , Sensor.output_fft_mag_z , FFT_SIZE);
+	arm_cmplx_mag_f32(Sensor.ACC_Y , Sensor.output_fft_mag_y , FFT_SIZE);
+	arm_cmplx_mag_f32(Sensor.ACC_X , Sensor.output_fft_mag_x , FFT_SIZE);
+
+	for(int i = 0 ; i < FFT_SIZE / 2 ; i++){
+		Sensor.output_fft_mag_z[i] *=  2.0f / (FFT_SIZE / 2.0f);
+		Sensor.output_fft_mag_y[i] *=  2.0f / (FFT_SIZE / 2.0f);
+		Sensor.output_fft_mag_x[i] *=  2.0f / (FFT_SIZE / 2.0f); //A_peak
+
+	}
+}
+void threshold_noise(){
+	Threshold_E_sse(Sensor.output_fft_mag_x , Base_noise.E_sse1_x ,S1_x );
+	Threshold_E_sse(Sensor.output_fft_mag_y , Base_noise.E_sse1_y ,S1_y );
+	Threshold_E_sse(Sensor.output_fft_mag_z , Base_noise.E_sse1_z ,S1_z );
+
+	Base_noise.E_sse_sum_z =  Base_noise.E_sse_sum_x = Base_noise.E_sse_sum_y =
+	Base_noise.E_sse_av_z = Base_noise.E_sse_av_x = Base_noise.E_sse_av_y =0.0f;
+
+	for(int i = 0 ; i < (FFT_SIZE / 2) ; i++){
+		Base_noise.E_sse_sum_x += Base_noise.E_sse1_x[i];
+		Base_noise.E_sse_sum_y += Base_noise.E_sse1_y[i];
+		Base_noise.E_sse_sum_z += Base_noise.E_sse1_z[i];
+
+	}Base_noise.E_sse_av_x = Base_noise.E_sse_sum_x / (FFT_SIZE / 2) ;
+	Base_noise.E_sse_av_y = Base_noise.E_sse_sum_y / (FFT_SIZE / 2) ;
+	Base_noise.E_sse_av_z = Base_noise.E_sse_sum_z / (FFT_SIZE / 2) ;
+
+	Base_noise.Ratio_x =  5 * Base_noise.E_sse_av_x;
+	Base_noise.Ratio_y =  5 * Base_noise.E_sse_av_y;
+	Base_noise.Ratio_z =  5 * Base_noise.E_sse_av_z;
+
+}
+
+void peak(){
+	//find_top_peaks_3axis(Sensor.output_fft_mag_x ,Sensor.output_fft_mag_y , Sensor.output_fft_mag_z , &freq , FFT_SIZE / 2 );
+	find_top_peaks_3axis(S1_x , S1_y , S1_z , &freq , FFT_SIZE / 2 );
+
+#if Ennable_s
+	if(!count){
+	 for (int i = 0; i < 512; i++) {
+	MW_LOG(TS_OFF, VLEVEL_M," $%d %d %d;",(int)(S1_x[i] * 1000.0f) , (int)(S1_y[i] * 1000.0f) , (int)(S1_z[i] * 1000.0f));
+//	MW_LOG(TS_OFF, VLEVEL_M," $%d %d %d;",(int)(Sensor.output_fft_mag_x[i] * 1000.0f) , (int)(Sensor.output_fft_mag_y[i] * 1000.0f)
+//			, (int)(Sensor.output_fft_mag_z[i] * 1000.0f));
+	 }
+	 count = 1;
+	}
+#endif
+
+	threshold.machine.Sampling_Rate = (float32_t)threshold.machine.freq * 2;
+
+	for(int i = 0 ; i < TOP_N ; i++){
+		if(freq.peaks_acc[i].Apeak_S1_x > Base_noise.Ratio_x
+				&& freq.peaks_acc[i].Apeak_S1_y > Base_noise.Ratio_y
+				&& freq.peaks_acc[i].Apeak_S1_z > Base_noise.Ratio_z){
+			Base_noise.Ratio_TOP_N++;
+		}
+	}if(Base_noise.Ratio_TOP_N == 0){
+		Base_noise.Ratio_TOP_N = 1 ;
+	}
+
+	for(int i = 0 ; i < Base_noise.Ratio_TOP_N ; i++){
+
+		freq.Interpolated_bin.x = ((Sensor.output_fft_mag_x[freq.peaks_acc[i].index_x - 1] - Sensor.output_fft_mag_x[freq.peaks_acc[i].index_x + 1])/
+				((Sensor.output_fft_mag_x[freq.peaks_acc[i].index_x - 1] - (2.0f *(float)freq.peaks_acc[i].index_x) + Sensor.output_fft_mag_x[freq.peaks_acc[i].index_x + 1])))* (1.0f/2.0f);
+		freq.Interpolated_bin.y = ((Sensor.output_fft_mag_y[freq.peaks_acc[i].index_y - 1] - Sensor.output_fft_mag_y[freq.peaks_acc[i].index_y + 1])/
+				((Sensor.output_fft_mag_y[freq.peaks_acc[i].index_y - 1] - (2.0f *(float)freq.peaks_acc[i].index_y) + Sensor.output_fft_mag_y[freq.peaks_acc[i].index_y + 1])))* (1.0f/2.0f);
+		freq.Interpolated_bin.z = ((Sensor.output_fft_mag_z[freq.peaks_acc[i].index_z - 1] - Sensor.output_fft_mag_z[freq.peaks_acc[i].index_z + 1])/
+				((Sensor.output_fft_mag_z[freq.peaks_acc[i].index_z - 1] - (2.0f * Sensor.output_fft_mag_z[freq.peaks_acc[i].index_z]) + Sensor.output_fft_mag_z[freq.peaks_acc[i].index_z + 1]))) * (1.0f/2.0f);
+
+		freq.peaks_acc[i].output_Hz_x = (freq.Interpolated_bin.x * (threshold.machine.Sampling_Rate / (float)FFT_SIZE))
+				+ (((float)freq.peaks_acc[i].index_x) * (threshold.machine.Sampling_Rate / (float)FFT_SIZE));
+
+		freq.peaks_acc[i].output_Hz_y = (freq.Interpolated_bin.y * (threshold.machine.Sampling_Rate / (float)FFT_SIZE))
+				+ (((float)freq.peaks_acc[i].index_y) * (threshold.machine.Sampling_Rate / (float)FFT_SIZE));
+
+		freq.peaks_acc[i].output_Hz_z = (freq.Interpolated_bin.z * (threshold.machine.Sampling_Rate / (float)FFT_SIZE))
+				+ (((float)freq.peaks_acc[i].index_z ) * (threshold.machine.Sampling_Rate / (float)FFT_SIZE));
+
+	}
+}
+
+void velocity(){
+	calculate_velocity(&freq, Base_noise.Ratio_TOP_N);
+	v.output_sqr_z = sqrtf(v.rms_z_sum)* 1000.0f;
+	v.output_sqr_y = sqrtf(v.rms_y_sum)* 1000.0f;
+	v.output_sqr_x = sqrtf(v.rms_x_sum)* 1000.0f;
+
+	v.output_Addition_vectors = sqrtf(v.rms_x_sum + v.rms_y_sum + v.rms_z_sum) * 1000.0f;
 }
 
 #endif
@@ -438,9 +784,6 @@ void Threshold_noise(float mag_z[], float E_sse_av , float  E_sse_sum , float E_
 void Acc_Calculation() {
 
 	/*Convert accelerometer, mg/LSB  to m/s^2*/
-//	Sensor.ACC_X[index1++] = (ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.x) / (float) 1000) *  9.80665;
-//	Sensor.ACC_Y[index2++] = (ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.y) / (float) 1000) *  9.80665;
-//	Sensor.ACC_Z[index3++] = (ism330dhcx_from_fs16g_to_mg(Sensor.data_raw_acceleration.z) / (float) 1000) *  9.80665;
 
 	/* USER CODE BEGIN */
 
@@ -450,77 +793,32 @@ void Acc_Calculation() {
 #if FFT_ENABLE
 
 		if(Sensor.index2 == FFT_SIZE){
-		calculate_acc(Sensor.ACC_X, Sensor.ACC_Y, Sensor.ACC_Z , FFT_SIZE , &Arms_x, &Arms_y, &Arms_z);
+		calculate_acc(Sensor.ACC_X, Sensor.ACC_Y, Sensor.ACC_Z , FFT_SIZE , &acc.output_rms_x, &acc.output_rms_y, &acc.output_rms_z);
+		acc.output_Addition_vectors = sqrtf((acc.output_rms_x * acc.output_rms_x) + (acc.output_rms_y * acc.output_rms_y)
+				+ (acc.output_rms_z * acc.output_rms_z));
+
 //-----------------------------------------------------------------------------------------------------------
-		float32_t Hann_w ;
-		for(int i = 0 ; i < FFT_SIZE ; i++){
-				Hann_w  = 0.5f * (1.0f - arm_cos_f32((2.0f * PI * i) / (FFT_SIZE - 1)));
-				Sensor.ACC_Z[i*2] *= Hann_w; Sensor.ACC_Y[i*2] *= Hann_w; Sensor.ACC_X[i*2] *= Hann_w;
-		}
+#if Ennable_HPF
+		HPF.CUTOFF_FREQ = 2.0f * ((float)Sampling_Rate / (float)FFT_SIZE);
+		high_pass_filter(Sensor.ACC_Z , FFT_SIZE , Sampling_Rate , HPF.CUTOFF_FREQ);
+#endif
+//		high_pass_filter(Sensor.ACC_Z , 1024, 3200 , 50) ;
+//		high_pass_filter(Sensor.ACC_Y , 1024, 3200 , 50) ;
+//		high_pass_filter(Sensor.ACC_X , 1024, 3200 , 50) ;
 
-		arm_cfft_radix4_f32(&FFThandler, Sensor.ACC_Z);
-		arm_cfft_radix4_f32(&FFThandler, Sensor.ACC_Y);
-		arm_cfft_radix4_f32(&FFThandler, Sensor.ACC_X);
+		Sensor.input_and_Apeak();
 
-		arm_cmplx_mag_f32(Sensor.ACC_Z, Sensor.output_fft_mag_z , FFT_SIZE);
-		arm_cmplx_mag_f32(Sensor.ACC_Y, Sensor.output_fft_mag_y , FFT_SIZE);
-		arm_cmplx_mag_f32(Sensor.ACC_X, Sensor.output_fft_mag_x , FFT_SIZE);
+		Base_noise.threshold_noise();
 
-		for(int i = 0 ; i < FFT_SIZE / 2 ; i++){
-			Sensor.output_fft_mag_z[i] *=  2.0f / (FFT_SIZE / 2.0f);
-			Sensor.output_fft_mag_y[i] *=  2.0f / (FFT_SIZE / 2.0f);
-			Sensor.output_fft_mag_x[i] *=  2.0f / (FFT_SIZE / 2.0f); //A_peak
-			}
+		freq.peak();
 
-		 Threshold_noise(Sensor.output_fft_mag_x , TH.E_sse_av_x , TH.E_sse_sum_x , TH.E_sse1_x); //------------------------
-		 Threshold_noise(Sensor.output_fft_mag_y , TH.E_sse_av_y , TH.E_sse_sum_y , TH.E_sse1_y);
-		 Threshold_noise(Sensor.output_fft_mag_z , TH.E_sse_av_z , TH.E_sse_sum_z , TH.E_sse1_z);
-		 TH.E_sse_sum_z =  TH.E_sse_sum_x =  TH.E_sse_sum_y = TH.E_sse_av_z = TH.E_sse_av_x = TH.E_sse_av_y =0.0f;
-		 for(int i = 0 ; i < (FFT_SIZE / 2) ; i++){
-			 TH.E_sse_sum_x += TH.E_sse1_x[i];
-			 TH.E_sse_sum_y += TH.E_sse1_y[i];
-			 TH.E_sse_sum_z += TH.E_sse1_z[i];
-
-		 }TH.E_sse_av_x = TH.E_sse_sum_x / (FFT_SIZE / 2) ;
-		  TH.E_sse_av_y = TH.E_sse_sum_y / (FFT_SIZE / 2) ;
-		  TH.E_sse_av_z = TH.E_sse_sum_z / (FFT_SIZE / 2) ;
-
-		 TH.Ratio_x =  3 * TH.E_sse_av_x;
-		 TH.Ratio_y =  3 * TH.E_sse_av_y;
-		 TH.Ratio_z =  3 * TH.E_sse_av_z;//---------------------- threshold noise ------------
-
-		find_top_peaks_3axis(Sensor.output_fft_mag_x ,Sensor.output_fft_mag_y , Sensor.output_fft_mag_z , peaks_acc, FFT_SIZE / 2 );
-
-		for(int i = 0 ; i < TOP_N ; i++){
-			if(peaks_acc[i].value_z > TH.Ratio_z && peaks_acc[i].value_y > TH.Ratio_y && peaks_acc[i].value_x > TH.Ratio_x ){
-				TH.Ratio_TOP_N++;
-			}
-		}if(TH.Ratio_TOP_N == 0){
-			TH.Ratio_TOP_N = 1 ;
-		}
-
-		for(int i = 0 ; i < TH.Ratio_TOP_N ; i++){
-			peaks_acc[i].peakFrequency_z = ((float)peaks_acc[i].index_z) * (3200.0f / FFT_SIZE);
-			peaks_acc[i].peakFrequency_y = ((float)peaks_acc[i].index_y) * (3200.0f / FFT_SIZE);
-			peaks_acc[i].peakFrequency_x = ((float)peaks_acc[i].index_x) * (3200.0f / FFT_SIZE);
-		}
-		//----------------------------------------------------------------------------------------------------------------------------------
-
-		calculate_velocity(peaks_acc, &v, TH.Ratio_TOP_N);
-		v.rms_z_sqr = sqrtf(v.rms_z_sum);
-		v.rms_y_sqr = sqrtf(v.rms_y_sum);
-		v.rms_x_sqr = sqrtf(v.rms_x_sum);
-
-		memset(Sensor.ACC_Z, 0, sizeof(Sensor.ACC_Z));
-		memset(Sensor.ACC_Y, 0, sizeof(Sensor.ACC_Y));
-		memset(Sensor.ACC_X, 0, sizeof(Sensor.ACC_X));
-		memset(Sensor.output_fft_mag_z, 0, sizeof(Sensor.output_fft_mag_z)); //Reset array
-		memset(Sensor.output_fft_mag_y, 0, sizeof(Sensor.output_fft_mag_y)); //Reset array
-		memset(Sensor.output_fft_mag_x, 0, sizeof(Sensor.output_fft_mag_x)); //Reset array
-		v.rms_z_sum = 0.0f; v.rms_y_sum = 0.0f; v.rms_x_sum = 0.0f; TH.Ratio_TOP_N = 0;
+		v.velocity();
 
 
-		 Sensor.index2 = 0;
+		Reset();
+		v.rms_z_sum = 0.0f; v.rms_y_sum = 0.0f; v.rms_x_sum = 0.0f; Base_noise.Ratio_TOP_N = 0;
+		sensor_App.wake_up  = 0;
+		sensor_App.offset  = 0;
 
 	}
 
@@ -534,8 +832,33 @@ void Sensor_Run() {
 }
 
 void Sensor_Log(){
-	 //MW_LOG(TS_OFF, VLEVEL_M, " ------------------- \r\n" );
+//	 MW_LOG(TS_OFF, VLEVEL_M, " ---------- minggggggggggg  --------- \r\n");
+
+	if(sensor_App.wake_up || sensor_App.offset ){
+
+//		uint8_t CTRL1_XL = (threshold.Fs.reg | threshold.ODR_sampling.reg) ; //Setting -> Fs , sampling Rate
+//		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL1_XL , CTRL1_XL);
+
+		if( sensor_App.offset ){
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL7_G  ,  0x00 );
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL6_C  ,  0x00);
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_X_OFS_USR  , 0x00 );
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_Y_OFS_USR  , 0x00 );
+	    BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_Z_OFS_USR  ,  0x00 );
+		}
+
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_DUR , 0x00);
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_WAKE_UP_THS, 0x00);
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_TAP_CFG0, 0x00);
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0,ISM330DHCX_TAP_CFG2 , 0x00 );
+		BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_MD1_CFG , 0x00);
+
+	sensor_App.offset1.sum_x = sensor_App.offset1.sum_y = sensor_App.offset1.sum_z = 0;
+	HAL_TIM_Base_Start_IT(ISM330DHCX_TIM);
+	}
 }
+
+
 uint8_t Wake_up_cnt = 0;
 uint32_t Wake_up_tick = 1000;
 void ACCELERO_GYRO_INT_RUN() {
@@ -567,15 +890,9 @@ void ACCELERO_GYRO_INT_RUN() {
 //		index1 = 0;
 //		}
 
-		memset(Sensor.ACC_Z, 0, sizeof(Sensor.ACC_Z));
-		memset(Sensor.ACC_Y, 0, sizeof(Sensor.ACC_Y));
-		memset(Sensor.ACC_X, 0, sizeof(Sensor.ACC_X));
-		memset(Sensor.output_fft_mag_z, 0, sizeof(Sensor.output_fft_mag_z)); //Reset array
-		memset(Sensor.output_fft_mag_y, 0, sizeof(Sensor.output_fft_mag_y)); //Reset array
-		memset(Sensor.output_fft_mag_x, 0, sizeof(Sensor.output_fft_mag_x)); //Reset array
-		Sensor.index2 = 0;
-
+		Reset();
 		FFT_Acc.Calculate = 1;
+		Sensor.status_wk = 1;
 		Sensor.Update_values = 0;
 
 
@@ -585,6 +902,7 @@ void ACCELERO_GYRO_INT_RUN() {
 		UTIL_SEQ_ResumeTask(1 << CFG_SEQ_Task_ApplicationLoop);
 #endif
 		HAL_TIM_Base_Start_IT(ISM330DHCX_TIM);
+		//HAL_TIM_Base_Start_IT(&htim16) ;
 
 	  }else{
 
