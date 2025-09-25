@@ -1,0 +1,9 @@
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:89:9:BSP_ENV_SENSOR_Init	15
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:182:9:BSP_ENV_SENSOR_DeInit	2
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:210:9:BSP_ENV_SENSOR_GetCapabilities	2
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:238:9:BSP_ENV_SENSOR_ReadID	2
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:268:9:BSP_ENV_SENSOR_Enable	3
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:308:9:BSP_ENV_SENSOR_Disable	3
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:349:9:BSP_ENV_SENSOR_GetOutputDataRate	3
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:390:9:BSP_ENV_SENSOR_SetOutputDataRate	3
+../Application/Primus/Common/Library_STTS22H/b_wl5m_subg_env_sensors.c:431:9:BSP_ENV_SENSOR_GetValue	3

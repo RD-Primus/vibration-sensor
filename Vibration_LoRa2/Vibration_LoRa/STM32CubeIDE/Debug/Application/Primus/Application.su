@@ -1,0 +1,11 @@
+../Application/Primus/Application.c:141:6:Application_Run	0	static
+../Application/Primus/Application.c:43:6:Function_Init	8	static
+../Application/Primus/Application.c:54:6:Function_Tick	24	static
+../Application/Primus/Application.c:77:6:Function_Start	8	static
+../Application/Primus/Application.c:84:6:Function_Loop	16	static
+../Application/Primus/Application.c:102:6:Application_Initial	24	static
+../Application/Primus/Application.c:158:6:HAL_IncTick	0	static,ignoring_inline_asm
+../Application/Primus/Application.c:170:6:HAL_TIM_PeriodElapsedCallback	0	static
+../Application/Primus/Application.c:192:6:Application_GPIO_EXTI_Callback	0	static
+../Application/Primus/Application.c:215:6:Application_UART_RxCpltCallback	0	static
+../Application/Primus/Application.c:222:6:Application_UART_TxCpltCallback	0	static
