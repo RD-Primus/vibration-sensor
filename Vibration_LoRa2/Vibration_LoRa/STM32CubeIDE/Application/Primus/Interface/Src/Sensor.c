@@ -678,7 +678,7 @@ void ODR_FS_setting(){
 
 	threshold.ODR_sampling.reg = 0b10010000; // 6667 Hz
 
-//if(sensor_App.zeroCross){
+if(sensor_App.zeroCross){
 	switch (sensor_App.input_FS_g) {
 		case 2:threshold.Fs.reg = 0b00000000;break;
 		case 4:threshold.Fs.reg = 0b00001000;break;
@@ -686,19 +686,19 @@ void ODR_FS_setting(){
 		case 16:threshold.Fs.reg = 0b00000100;break;
 		default:break;
 	}
-//	uint8_t CTRL8_XL  = 0x00;
-//	 BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL8_XL, CTRL8_XL); // LPF1
-//} else {
-//	 switch (sensor_App.input_FS_g) {
-//			case 2:threshold.Fs.reg = 0b00000000;break;
-//			case 4:threshold.Fs.reg = 0b00001000;break;
-//			case 8:threshold.Fs.reg = 0b00001100;break;
-//			case 16:threshold.Fs.reg = 0b00000100;break;
-//			default:break;
-//	}  uint8_t CTRL8_XL  = 0x01;
-//	BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL8_XL, CTRL8_XL); // LPF1 + LPF2 (ODR / 4)
-//
-//}
+	uint8_t CTRL8_XL  = 0x00;
+	 BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL8_XL, CTRL8_XL); // LPF1
+} else {
+	 switch (sensor_App.input_FS_g) {
+			case 2:threshold.Fs.reg = 0b00000000;break;
+			case 4:threshold.Fs.reg = 0b00001000;break;
+			case 8:threshold.Fs.reg = 0b00001100;break;
+			case 16:threshold.Fs.reg = 0b00000100;break;
+			default:break;
+	}  uint8_t CTRL8_XL  = 0x01;
+	BSP_MOTION_SENSOR_Write_Register(MOTION_SENSOR_ISM330DHCX_0, ISM330DHCX_CTRL8_XL, CTRL8_XL); // LPF1 + LPF2 (ODR / 4)
+
+}
 }
 
 void Full_scale (){
