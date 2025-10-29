@@ -1,0 +1,11 @@
+../../Drivers/CMSIS/Include/core_cm4.h:1933:34:__NVIC_SystemReset	1
+../Application/Primus/Interface/Src/Parameter.c:16:6:Force_Reboot	0
+../Application/Primus/Interface/Src/Parameter.c:22:6:Set_LoRa_Key_TEST_MODE	1
+../Application/Primus/Interface/Src/Parameter.c:54:6:Set_LoRa_Key_Info	1
+../Application/Primus/Interface/Src/Parameter.c:68:6:Get_LoRa_Key_Info	5
+../Application/Primus/Interface/Src/Parameter.c:115:6:Default_Parameter	2
+../Application/Primus/Interface/Src/Parameter.c:199:6:UplinkCounter_Save	1
+../Application/Primus/Interface/Src/Parameter.c:205:6:Parameter_Init	8
+../Application/Primus/Interface/Src/Parameter.c:260:6:Key_Config	2
+../Application/Primus/Interface/Src/Parameter.c:282:6:Parameter_Save	5
+../Application/Primus/Interface/Src/Parameter.c:302:6:Parameter_Read	5

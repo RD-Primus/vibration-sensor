@@ -1,0 +1,12 @@
+../../Drivers/CMSIS/Include/core_cm4.h:1933:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Application/Primus/Application.c:43:6:Function_Init	24	static
+../Application/Primus/Application.c:54:6:Function_Tick	16	static
+../Application/Primus/Application.c:77:6:Function_Start	16	static
+../Application/Primus/Application.c:84:6:Function_Loop	16	static
+../Application/Primus/Application.c:102:6:Application_Initial	16	static
+../Application/Primus/Application.c:133:6:Application_Run	8	static
+../Application/Primus/Application.c:148:6:HAL_IncTick	8	static
+../Application/Primus/Application.c:159:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Application/Primus/Application.c:170:6:Application_GPIO_EXTI_Callback	16	static
+../Application/Primus/Application.c:197:6:Application_UART_RxCpltCallback	16	static
+../Application/Primus/Application.c:204:6:Application_UART_TxCpltCallback	16	static
