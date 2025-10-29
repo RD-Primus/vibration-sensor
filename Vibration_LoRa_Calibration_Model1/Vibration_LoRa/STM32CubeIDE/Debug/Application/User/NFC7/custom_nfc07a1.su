@@ -1,0 +1,5 @@
+D:/vibration test123/Vibration_LoRa/Vibration_LoRa/NFC7/custom_nfc07a1.c:103:13:BSP_GPO_Callback	0	static
+D:/vibration test123/Vibration_LoRa/Vibration_LoRa/NFC7/custom_nfc07a1.c:50:9:CUSTOM_GPO_Init	40	static
+D:/vibration test123/Vibration_LoRa/Vibration_LoRa/NFC7/custom_nfc07a1.c:77:9:CUSTOM_GPO_DeInit	8	static
+D:/vibration test123/Vibration_LoRa/Vibration_LoRa/NFC7/custom_nfc07a1.c:94:9:CUSTOM_GPO_ReadPin	8	static
+D:/vibration test123/Vibration_LoRa/Vibration_LoRa/NFC7/custom_nfc07a1.c:111:6:BSP_GPO_IRQHandler	0	static
