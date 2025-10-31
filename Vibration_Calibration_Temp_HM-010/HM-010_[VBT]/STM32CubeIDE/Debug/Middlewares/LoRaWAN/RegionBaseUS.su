@@ -1,0 +1,4 @@
+D:/Vibration test/HM-010_[VBT]/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:48:24:FindAvailable125kHzChannels	32	static
+D:/Vibration test/HM-010_[VBT]/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:74:17:RegionBaseUSComputeNext125kHzJoinChannel	48	static
+D:/Vibration test/HM-010_[VBT]/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:135:6:RegionBaseUSVerifyFrequencyGroup	24	static
+D:/Vibration test/HM-010_[VBT]/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:146:10:RegionBaseUSCalcDownlinkFrequency	24	static
