@@ -1,0 +1,3 @@
+../MEMS/App/app_mems.c:35:6:MX_MEMS_Init	8	static
+../MEMS/App/app_mems.c:50:6:Accelero_Sensor_Handler	0	static
+../MEMS/App/app_mems.c:62:6:MX_MEMS_Process	0	static
