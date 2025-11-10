@@ -181,7 +181,7 @@ uint32_t Sensor_Init(void) {
 	calibration.Hann.new_Han = 2.0;
 	calibration	.Regession_peak .input_Gain = 1.0;
 
-	Temp.Reset = 1; // Reset interrupt
+	//Temp.Reset = 1; // Reset interrupt
 
 
   return 0;
@@ -218,7 +218,6 @@ uint32_t Sensor_STTS22HInit(void)
 
   Temp.H_limit = 30;
   Temp.L_limit = -30;
-
   BSP_ENV_SENSOR_Write_Register(ENV_SENSOR_STTS22H_0, 0x02 , 63 + (Temp.H_limit/ 0.64));
   BSP_ENV_SENSOR_Write_Register(ENV_SENSOR_STTS22H_0, 0x03 , 63 + (Temp.L_limit/ 0.64));
 
@@ -316,8 +315,11 @@ void Measure_Temp_STTS22H()
 
       Sensor.temperature_alarm = HAL_GPIO_ReadPin(IRQ1_STTS22H_GPIO_Port, IRQ1_STTS22H_Pin);
 
-      if((Sensor.temperature  / 100)  < Temp.H_limit)
+      if((Sensor.temperature  / 100) < Temp.H_limit){
     	  Temp.interrupt = 0;
+      	  //Temp.Reset = 1;
+      	  BSP_ENV_SENSOR_Read_Register(ENV_SENSOR_STTS22H_0, 0x05 , &Temp.OVER);
+      }
 
     }
   }
@@ -1257,10 +1259,10 @@ void Sensor_Log(){
 
 	Sensor.temperature_alarm = HAL_GPIO_ReadPin(IRQ1_STTS22H_GPIO_Port, IRQ1_STTS22H_Pin);
 
-    if(Temp.Reset){ // Reset interrupt
-  	  BSP_ENV_SENSOR_Read_Register(ENV_SENSOR_STTS22H_0, 0x05 , &Temp.OVER);
-  	  Temp.Reset = 0;
-    }
+//    if(Temp.Reset){ // Reset interrupt
+//  	  BSP_ENV_SENSOR_Read_Register(ENV_SENSOR_STTS22H_0, 0x05 , &Temp.OVER);
+//  	  Temp.Reset = 0;
+//    }
 
 		if((sensor_App.wake_up || sensor_App.offset) || (sensor_App.Train || Temp.interrupt) ){
 

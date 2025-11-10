@@ -274,7 +274,7 @@ typedef struct {
 	int16_t Output ;
 
 	uint8_t OVER;
-	bool Reset;
+	//bool Reset;
 
 	int16_t H_limit;
 	int16_t L_limit;
