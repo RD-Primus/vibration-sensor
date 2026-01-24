@@ -1,0 +1,9 @@
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:138:9:IKS01A3_ENV_SENSOR_Init	47
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:585:9:IKS01A3_ENV_SENSOR_DeInit	2
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:611:9:IKS01A3_ENV_SENSOR_GetCapabilities	2
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:637:9:IKS01A3_ENV_SENSOR_ReadID	2
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:663:9:IKS01A3_ENV_SENSOR_Enable	3
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:699:9:IKS01A3_ENV_SENSOR_Disable	3
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:736:9:IKS01A3_ENV_SENSOR_GetOutputDataRate	3
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:773:9:IKS01A3_ENV_SENSOR_SetOutputDataRate	3
+D:/vibration test123/liclinometer/Drivers/BSP/IKS01A3/iks01a3_env_sensors.c:810:9:IKS01A3_ENV_SENSOR_GetValue	3

@@ -1,0 +1,12 @@
+../../Drivers/CMSIS/Include/core_cm4.h:1933:34:__NVIC_SystemReset	1
+../Application/Primus/Application.c:43:6:Function_Init	1
+../Application/Primus/Application.c:54:6:Function_Tick	6
+../Application/Primus/Application.c:77:6:Function_Start	2
+../Application/Primus/Application.c:84:6:Function_Loop	5
+../Application/Primus/Application.c:102:6:Application_Initial	1
+../Application/Primus/Application.c:133:6:Application_Run	1
+../Application/Primus/Application.c:148:6:HAL_IncTick	1
+../Application/Primus/Application.c:159:6:HAL_TIM_PeriodElapsedCallback	2
+../Application/Primus/Application.c:170:6:Application_GPIO_EXTI_Callback	5
+../Application/Primus/Application.c:199:6:Application_UART_RxCpltCallback	1
+../Application/Primus/Application.c:206:6:Application_UART_TxCpltCallback	1

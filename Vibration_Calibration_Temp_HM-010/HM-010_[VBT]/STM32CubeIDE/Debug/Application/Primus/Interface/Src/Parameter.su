@@ -1,0 +1,11 @@
+../../Drivers/CMSIS/Include/core_cm4.h:1933:34:__NVIC_SystemReset	4	static,ignoring_inline_asm
+../Application/Primus/Interface/Src/Parameter.c:16:6:Force_Reboot	8	static
+../Application/Primus/Interface/Src/Parameter.c:22:6:Set_LoRa_Key_TEST_MODE	56	static
+../Application/Primus/Interface/Src/Parameter.c:54:6:Set_LoRa_Key_Info	8	static
+../Application/Primus/Interface/Src/Parameter.c:68:6:Get_LoRa_Key_Info	48	static
+../Application/Primus/Interface/Src/Parameter.c:115:6:Default_Parameter	16	static
+../Application/Primus/Interface/Src/Parameter.c:199:6:UplinkCounter_Save	16	static
+../Application/Primus/Interface/Src/Parameter.c:205:6:Parameter_Init	16	static
+../Application/Primus/Interface/Src/Parameter.c:260:6:Key_Config	8	static
+../Application/Primus/Interface/Src/Parameter.c:282:6:Parameter_Save	16	static
+../Application/Primus/Interface/Src/Parameter.c:302:6:Parameter_Read	16	static

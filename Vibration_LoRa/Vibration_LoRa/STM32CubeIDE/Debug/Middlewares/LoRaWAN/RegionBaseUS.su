@@ -1,0 +1,3 @@
+D:/vibration_sensor/Vibration_LoRa/Vibration_LoRa/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:74:17:RegionBaseUSComputeNext125kHzJoinChannel	32	static
+D:/vibration_sensor/Vibration_LoRa/Vibration_LoRa/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:135:6:RegionBaseUSVerifyFrequencyGroup	0	static
+D:/vibration_sensor/Vibration_LoRa/Vibration_LoRa/Middlewares/Third_Party/LoRaWAN/Mac/Region/RegionBaseUS.c:146:10:RegionBaseUSCalcDownlinkFrequency	0	static

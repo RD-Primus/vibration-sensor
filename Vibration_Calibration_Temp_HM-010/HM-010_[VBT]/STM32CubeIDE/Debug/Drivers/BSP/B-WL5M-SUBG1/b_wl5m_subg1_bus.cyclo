@@ -1,0 +1,16 @@
+../../Drivers/STM32WLxx_HAL_Driver/Inc/stm32wlxx_ll_bus.h:449:22:LL_AHB2_GRP1_EnableClock	1
+../../Drivers/STM32WLxx_HAL_Driver/Inc/stm32wlxx_ll_bus.h:914:22:LL_APB1_GRP1_EnableClock	1
+../../Drivers/STM32WLxx_HAL_Driver/Inc/stm32wlxx_ll_bus.h:1018:22:LL_APB1_GRP1_DisableClock	1
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:91:9:BSP_I2C3_Init	6
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:139:9:BSP_I2C3_DeInit	4
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:167:9:BSP_I2C3_IsReady	2
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:188:9:BSP_I2C3_WriteReg	3
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:214:10:BSP_I2C3_ReadReg	3
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:242:9:BSP_I2C3_WriteReg16	3
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:267:10:BSP_I2C3_ReadReg16	3
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:292:9:BSP_I2C3_Send	3
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:317:9:BSP_I2C3_Recv	3
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:392:9:BSP_GetTick	1
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:398:26:MX_I2C3_Init	4
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:429:13:I2C3_MspInit	1
+D:/Vibration test/HM-010_[VBT]/Drivers/BSP/B-WL5M-SUBG1/b_wl5m_subg1_bus.c:469:13:I2C3_MspDeInit	1
